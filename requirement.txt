@@ -1,3 +1,9 @@
 torch
 torchvision
 torchprofile
+
+gradio
+numpy
+matplotlib
+pillow
+opencv-python
