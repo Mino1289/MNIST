@@ -8,23 +8,22 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 
-from models import MNISTClassifierCNN, MNISTClassifierMLP, unit 
+from models import *
 
 models = {
     "MNISTClassifierCNN": {"path": "models/mnist_modelCNN.pth", "class": MNISTClassifierCNN},
     "MNISTClassifierMLP": {"path": "models/mnist_modelMLP.pth", "class": MNISTClassifierMLP},
+    "MNISTClassifierResNet18": {"path": "models/resnet18_mnist_model.pth", "class": MNISTClassifierResNet18},
 }
 
-# models = [MNISTClassifierCNN, MNISTClassifierMLP]
 
 def load_model(model_path, model_class):
-    print(model_path)
     input_size = 1 * 28 * 28
     n_classes = 10
 
     model = model_class(input_size, n_classes)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.mps.is_available() else 'cpu')
     state_dict = torch.load(model_path, map_location=device)
 
     # Créer un nouveau state_dict sans le préfixe '_orig_mod.'
@@ -82,7 +81,7 @@ def predict(model_name, input):
 with gr.Blocks() as demo:
     model_dropdown = gr.Dropdown(choices=list(models.keys()), label="Select Model")
     with gr.Row():
-        input_canvas = gr.Sketchpad(label="Dessiner ici", canvas_size=(280, 280), layers=False)
+        input_canvas = gr.Sketchpad(label="Dessiner ici", canvas_size=(560, 560), layers=False)
         output_image = gr.Image(label="Image convertie")
         output_chart = gr.Plot(label="Probabilités des classes")
 
