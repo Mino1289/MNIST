@@ -1,6 +1,7 @@
 import torch
 import torchprofile
 from torch import nn
+from torchvision import models
 
 
 IMG_CHS = 1
@@ -31,11 +32,9 @@ class MNISTClassifierMLP(nn.Module):
         logits = self.linear_relu_stack(x)
         return logits
     
-    @property
     def size(self):
         return sum(p.numel() for p in self.parameters())
     
-    @property
     def compute(self):
         sq = round(self.input_size ** 0.5)
         dummy_input = torch.randn((1, 1, sq, sq))
@@ -76,11 +75,69 @@ class MNISTClassifierCNN(nn.Module):
     def forward(self, x):
         return self.cnnlayers(x)
 
-    @property
     def size(self):
         return sum(p.numel() for p in self.parameters())
     
-    @property
+    def compute(self):
+        sq = round(self.input_size ** 0.5)
+        dummy_input = torch.randn((1, 1, sq, sq))
+        return torchprofile.profile_macs(self, dummy_input)
+    
+class MNISTClassifierResNet18(nn.Module):
+    def __init__(self, input_size, n_classes):
+        super().__init__()
+        self.input_size = input_size
+        self.n_classes = n_classes
+        self.model = models.resnet18(num_classes=n_classes)
+        # our img is grey not rgb.
+        self.model.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False) 
+
+    def forward(self, x):
+        return self.model(x)
+    
+    def size(self):
+        return sum(p.numel() for p in self.parameters())
+    
+    def compute(self):
+        sq = round(self.input_size ** 0.5)
+        dummy_input = torch.randn((1, 1, sq, sq))
+        return torchprofile.profile_macs(self.eval(), dummy_input)
+    
+class MNISTClassifierResNet101(nn.Module):
+    def __init__(self, input_size, n_classes):
+        super().__init__()
+        self.input_size = input_size
+        self.n_classes = n_classes
+        self.model = models.resnet101(num_classes=n_classes)
+        # our img is grey not rgb.
+        self.model.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False) 
+
+    def forward(self, x):
+        return self.model(x)
+    
+    def size(self):
+        return sum(p.numel() for p in self.parameters())
+    
+    def compute(self):
+        sq = round(self.input_size ** 0.5)
+        dummy_input = torch.randn((1, 1, sq, sq))
+        return torchprofile.profile_macs(self.eval(), dummy_input)
+    
+
+class MNISTClassifierModular(nn.Module):
+    def __init__(self, model, input_size, n_classes):
+        super().__init__()
+        self.input_size = input_size
+        self.n_classes = n_classes
+        self.model = model
+        # our img is grey not rgb.
+
+    def forward(self, x):
+        return self.model(x)
+    
+    def size(self):
+        return sum(p.numel() for p in self.parameters())
+    
     def compute(self):
         sq = round(self.input_size ** 0.5)
         dummy_input = torch.randn((1, 1, sq, sq))
